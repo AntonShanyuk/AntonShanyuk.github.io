@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Datatable grid sample</title>
+
+    <link rel="stylesheet" href="./index.css">
+    <script src="./lib/knockout-3.4.0.js"></script>
+    <script src="./src/DataTableViewModel.js"></script>
+</head>
+
+<body>
+    <div class="data-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <!-- ko foreach: columns -->
+                    <th data-bind="text: header"></th>
+                    <!-- /ko -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ko foreach: { data: rows, as: 'row' } -->
+                <tr>
+                    <!-- ko foreach: { data: $root.columns, as: 'column'} -->
+                    <td data-bind="text: row[column.name]"></td>
+                    <!-- /ko -->
+                </tr>
+                <!-- /ko -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="./src/main.js"></script>
+</body>
+
+</html>

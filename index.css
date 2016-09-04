@@ -1,0 +1,16 @@
+.data-table-container table {
+    border-collapse: collapse;
+}
+
+.data-table-container table td, th{
+    border: 1px solid darkgrey;
+    padding:5px;
+}
+
+.data-table-container table thead tr{
+    background-color: lightblue;
+    color: white;
+}
+
+.data-table-container table tbody tr:nth-child(even) {background: #DDD}
+.data-table-container table tbody tr:nth-child(odd) {background: #FFF}
