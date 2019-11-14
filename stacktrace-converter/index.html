@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Magic StackTrace Converter</title>
+</head>
+<body>
+    <script src="https://unpkg.com/source-map@0.7.3/dist/source-map.js"></script>
+    <script>
+        sourceMap.SourceMapConsumer.initialize({
+            "lib/mappings.wasm": "https://unpkg.com/source-map@0.7.3/lib/mappings.wasm"
+        });
+    </script>
+    <div>
+            <input class="file" type="file" />
+    </div>
+    <div>
+        <textarea class="stack" style="width: 100%;" rows=20></textarea>
+    </div>
+    <div>
+        <button class="parse">Parse</button>
+    </div>
+    <div class="result"></div>
+    <script>
+        const executeSequentially = async(arr) => {
+            const result = Promise.resolve();
+            return arr.reduce(
+                async (acc, current) => {
+                    await acc;
+                    await current();
+                }, result
+            );
+        };
+        const lineRegex = /File\s+(\S+)\s+line\s+(\d+)\s+col\s+(\d+)\s+in\s+(\S+)/;
+        const sourceMapConsumerCache = {};
+        const parse = async (stack, targetSourceMap) => {
+            const frames = [];
+            await executeSequentially(stack.map(line => async () => {
+                const match = lineRegex.exec(line);
+                if (match) {
+                    const [fullMatch, fileName, lineNumber, columnNumber] = match;
+
+                    if (!sourceMapConsumerCache[fileName]) {
+                        sourceMapConsumerCache[fileName] = await new sourceMap.SourceMapConsumer(JSON.stringify(targetSourceMap));
+                    }
+
+                    const frame = sourceMapConsumerCache[fileName].originalPositionFor({
+                        line: Number(lineNumber),
+                        column: Number(columnNumber),
+                        // bias: sourceMap.SourceMapConsumer.LEAST_UPPER_BOUND
+                    });
+
+                    frames.push(frame);
+                }
+            }));
+            
+            const result = document.querySelector(".result");
+            result.innerHTML = "";
+            frames.forEach(({ source, line, column, name }) => {
+                const div = document.createElement("div");
+                div.innerHTML = `File ${source} line ${line} col ${column}, in <i>${name || "anonymous"}</i>`;
+                result.append(div);
+            })
+        };
+        let targetSourceMap;
+        document.querySelector(".parse").addEventListener("click", () => {
+            const stackTrace = document.querySelector(".stack").value;
+
+            if(targetSourceMap && stackTrace) {
+                const stack = stackTrace.split("\n");
+                parse(stack, targetSourceMap);   
+            }
+        });
+
+        document.querySelector(".file").addEventListener("change", (evt) => {
+            var reader = new FileReader();
+            reader.addEventListener("load", evt => {
+                targetSourceMap = evt.target.result;
+            })
+            reader.readAsText(evt.target.files[0]);
+        });
+
+    </script>
+    
+</body>
+</html>
